@@ -100,6 +100,10 @@ class WorkloadProfile(BaseModel):
         description="Complexity of the workload."
     )
 
+    context_window: str = Field(
+        description="The maximum number of tokens (words/characters) the model can process in a single request"
+    )
+
 
 # ============================================================================
 # REQUIRED CAPABILITIES

@@ -12,7 +12,10 @@ downstream tooling will use to select and benchmark candidate LLMs.
 You must populate every field of the schema:
 - business_context: the industry and a concise restatement of the use case.
 - workload_profile: classify the workload family, task type, and complexity, \
-  taking into account the reasoning depth and multimodality the use case implies.
+  taking into account the reasoning depth and multimodality the use case implies. \
+  Also estimate the minimum context window (in tokens) the model needs to handle \
+  a typical request for this use case (e.g. a single support ticket vs. a full \
+  contract review), expressed as a token count or range such as "8k-16k tokens".
 - required_capabilities: choose only from the fixed capability list defined by the \
   schema's enum (e.g. Reasoning, Long Context, Structured Output, Function Calling, \
   Tool Calling, RAG Support, PII Handling, Multimodal, OCR, Code Generation, \

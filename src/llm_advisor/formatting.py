@@ -33,6 +33,7 @@ def format_analysis(blueprint: ScenarioEvaluationBlueprint) -> str:
         f"- Workload family: {workload.workload_family.value}",
         f"- Task type: {workload.task_type.value}",
         f"- Complexity: {workload.complexity.value}",
+        f"- Context window: {workload.context_window}",
         "\n**Required LLM capabilities**",
         capabilities,
         "\n**Benchmark plan**",
