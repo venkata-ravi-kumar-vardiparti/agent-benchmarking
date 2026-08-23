@@ -20,4 +20,4 @@ build/
 .env
 
 # Local data stores
-*.db
+#*.db
