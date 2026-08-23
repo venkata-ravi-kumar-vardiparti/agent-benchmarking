@@ -5,6 +5,18 @@ import streamlit as st
 from llm_advisor.agent import analyze
 from llm_advisor.config import get_settings
 from llm_advisor.formatting import format_analysis
+from model_catalog.repository import list_models
+from model_qualification import qualify_models
+from model_qualification.formatting import format_qualification
+
+
+_INPUT_KEYS = ("advisor_industry", "advisor_use_case", "advisor_volume", "advisor_budget", "advisor_model_name")
+
+
+def _clear_advisor_state() -> None:
+    st.session_state.messages = []
+    for key in _INPUT_KEYS:
+        st.session_state.pop(key, None)
 
 
 def _validate(industry: str, use_case: str, volume: float, budget: float) -> list[str]:
@@ -23,7 +35,16 @@ def _validate(industry: str, use_case: str, volume: float, budget: float) -> lis
 def render_advisor_tab() -> None:
     settings = get_settings()
 
-    st.header("LLM Capability Advisor")
+    header_col, clear_col = st.columns([5, 1])
+    with header_col:
+        st.header("LLM Capability Advisor")
+    with clear_col:
+        st.button(
+            "Clear",
+            on_click=_clear_advisor_state,
+            use_container_width=True,
+            help="Clear the conversation history and reset all inputs on this tab.",
+        )
     st.caption(
         "Provide the industry, business use case, expected request volume, and "
         "budget ceiling in the sidebar. The agent will analyze what capabilities "
@@ -35,11 +56,17 @@ def render_advisor_tab() -> None:
 
     with st.sidebar:
         st.header("Scenario details")
-        industry = st.text_input("Industry")
-        use_case = st.text_area("Business use case")
-        volume = st.number_input("Volume of requests (per month)", min_value=0, step=100)
-        budget = st.number_input("Budget ceiling (USD/month)", min_value=0.0, step=100.0)
-        model_name = st.text_input("Model", value=settings.default_model)
+        industry = st.text_input("Industry", key="advisor_industry")
+        use_case = st.text_area("Business use case", key="advisor_use_case")
+        volume = st.number_input(
+            "Volume of requests (per month)", min_value=0, step=100, key="advisor_volume"
+        )
+        budget = st.number_input(
+            "Budget ceiling (USD/month)", min_value=0.0, step=100.0, key="advisor_budget"
+        )
+        model_name = st.text_input(
+            "Model", value=settings.default_model, key="advisor_model_name"
+        )
         submitted = st.button("Analyze")
 
     for message in st.session_state.messages:
@@ -78,7 +105,10 @@ def render_advisor_tab() -> None:
         with st.spinner("Analyzing scenario..."):
             try:
                 blueprint = analyze(industry, use_case, volume, budget, model_name)
-                response_text = format_analysis(blueprint)
+                qualification = qualify_models(blueprint.required_capabilities, list_models())
+                response_text = (
+                    format_analysis(blueprint) + "\n\n" + format_qualification(qualification)
+                )
             except Exception as exc:  # noqa: BLE001
                 response_text = f"Analysis failed: {exc}"
         st.markdown(response_text)
