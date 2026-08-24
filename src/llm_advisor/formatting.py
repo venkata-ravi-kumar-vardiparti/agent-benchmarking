@@ -10,41 +10,29 @@ def format_analysis(blueprint: ScenarioEvaluationBlueprint) -> str:
     governance = blueprint.governance_requirements
     financial = blueprint.financial_constraints
 
-    capabilities = (
-        "\n".join(f"- {c.value}" for c in blueprint.required_capabilities)
-        or "- None specified"
-    )
-    metrics = (
-        "\n".join(f"- {m.value}" for m in benchmark.evaluation_metrics)
-        or "- None specified"
-    )
-    weights = (
-        "\n".join(f"- {k}: {v}%" for k, v in benchmark.weights.items())
-        or "- None specified"
-    )
+    capabilities = ", ".join(c.value for c in blueprint.required_capabilities) or "None specified"
+    metrics = ", ".join(m.value for m in benchmark.evaluation_metrics) or "None specified"
+    weights = ", ".join(f"{k}: {v}%" for k, v in benchmark.weights.items()) or "None specified"
     regulations = ", ".join(r.value for r in governance.regulations) or "None"
     allowed_regions = ", ".join(r.value for r in governance.allowed_regions) or "Any"
 
-    parts = [
-        "**Business context**",
-        f"- Industry: {ctx.industry.value}",
-        f"- Use case: {ctx.use_case}",
-        "\n**Workload profile**",
-        f"- Workload family: {workload.workload_family.value}",
-        f"- Task type: {workload.task_type.value}",
-        f"- Complexity: {workload.complexity.value}",
-        f"- Context window: {workload.context_window}",
-        "\n**Required LLM capabilities**",
-        capabilities,
-        "\n**Benchmark plan**",
-        "Evaluation metrics:",
-        metrics,
-        "Scoring weights:",
-        weights,
-        "\n**Governance requirements**",
-        f"- Regulations: {regulations}",
-        f"- Allowed regions: {allowed_regions}",
-        "\n**Financial constraints**",
-        f"- Monthly budget: ${financial.monthly_budget_usd:,.2f}",
+    rows = [
+        ("Industry", ctx.industry.value),
+        ("Use case", ctx.use_case),
+        ("Workload family", workload.workload_family.value),
+        ("Task type", workload.task_type.value),
+        ("Complexity", workload.complexity.value),
+        ("Context window", workload.context_window),
+        ("Required capabilities", capabilities),
+        ("Evaluation metrics", metrics),
+        ("Scoring weights", weights),
+        ("Regulations", regulations),
+        ("Allowed regions", allowed_regions),
+        ("Monthly budget", f"${financial.monthly_budget_usd:,.2f}"),
     ]
-    return "\n".join(parts)
+
+    table_lines = ["| Field | Value |", "| --- | --- |"]
+    table_lines += [f"| {field} | {value} |" for field, value in rows]
+
+    parts = ["**Scenario Evaluation Blueprint**", "\n".join(table_lines)]
+    return "\n\n".join(parts)
