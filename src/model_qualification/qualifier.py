@@ -39,16 +39,33 @@ def _parse_context_window_tokens(value: str) -> int | None:
     return int(number)
 
 
+def _estimate_monthly_cost_usd(
+    model: ModelRecord,
+    tokens_per_request: int,
+    monthly_request_volume: float,
+) -> float:
+    """Estimate monthly spend for `model` given a per-request token count and request volume.
+
+    Treats `tokens_per_request` (the scenario's context window need) as the
+    combined input+output tokens consumed by a single request.
+    """
+    cost_per_million = model.input_token_cost_usd_per_million + model.output_token_cost_usd_per_million
+    return (tokens_per_request / 1_000_000) * cost_per_million * monthly_request_volume
+
+
 def qualify_models(
     required_capabilities: list[Capability],
     catalog_models: list[ModelRecord],
     context_window_need: str,
+    monthly_request_volume: float,
+    monthly_budget_usd: float,
 ) -> ModelQualificationResult:
     """Classify every model in the catalog as qualified or disqualified.
 
     A model is qualified only if it is present in the organization's approved
-    model registry, supports every capability in `required_capabilities`, AND
-    has a context window at least as large as `context_window_need`.
+    model registry, supports every capability in `required_capabilities`, has a
+    context window at least as large as `context_window_need`, AND has an
+    estimated monthly cost (given `monthly_request_volume`) within `monthly_budget_usd`.
     """
     approved_ids = approved_model_ids(catalog_models)
     required_context_window = _parse_context_window_tokens(context_window_need)
@@ -68,6 +85,16 @@ def qualify_models(
                 "Context window too small: requires at least "
                 f"{required_context_window} tokens, has {model.context_window}"
             )
+
+        if required_context_window is not None:
+            estimated_cost = _estimate_monthly_cost_usd(
+                model, required_context_window, monthly_request_volume
+            )
+            if estimated_cost > monthly_budget_usd:
+                reasons.append(
+                    f"Estimated monthly cost ${estimated_cost:,.2f} exceeds "
+                    f"budget ${monthly_budget_usd:,.2f}"
+                )
 
         if reasons:
             result.disqualified_models.append(

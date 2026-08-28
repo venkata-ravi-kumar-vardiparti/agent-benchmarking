@@ -19,6 +19,7 @@ def format_analysis(blueprint: ScenarioEvaluationBlueprint) -> str:
     rows = [
         ("Industry", ctx.industry.value),
         ("Use case", ctx.use_case),
+        ("Volume of requests (per month)", ctx.monthly_request_volume),
         ("Workload family", workload.workload_family.value),
         ("Task type", workload.task_type.value),
         ("Complexity", workload.complexity.value),

@@ -37,6 +37,11 @@ class BusinessContext(BaseModel):
         description="Business use case being evaluated."
     )
 
+    monthly_request_volume: float = Field(
+        ge=0,
+        description="Expected number of requests per month for this use case."
+    )
+
 
 # ============================================================================
 # WORKLOAD PROFILE

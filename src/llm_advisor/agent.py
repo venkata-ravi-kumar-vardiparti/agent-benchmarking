@@ -12,7 +12,8 @@ volume, and monthly budget ceiling), produce a structured evaluation blueprint t
 downstream tooling will use to select and benchmark candidate LLMs.
 
 You must populate every field of the schema:
-- business_context: the industry and a concise restatement of the use case.
+- business_context: the industry, a concise restatement of the use case, and \
+  monthly_request_volume set to the provided expected monthly request volume.
 - workload_profile: classify the workload family, task type, and complexity, \
   taking into account the reasoning depth and multimodality the use case implies. \
   Also estimate the minimum context window (in tokens) the model needs to handle \

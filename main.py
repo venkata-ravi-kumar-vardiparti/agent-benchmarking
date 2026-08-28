@@ -21,6 +21,8 @@ def main():
             blueprint.required_capabilities,
             list_models(),
             blueprint.workload_profile.context_window,
+            blueprint.business_context.monthly_request_volume,
+            blueprint.financial_constraints.monthly_budget_usd,
         )
         response_text = (
                 format_analysis(blueprint) + "\n\n" + format_qualification(qualification)
