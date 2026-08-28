@@ -1,6 +1,8 @@
 """Agent construction and invocation for LLM capability analysis."""
 
-from agents import Agent, AgentOutputSchema, Runner,trace
+from agents import Agent, AgentOutputSchema, Runner,trace,set_default_openai_client
+from openai import AsyncOpenAI
+from llm_advisor.config import get_settings
 
 from llm_advisor.analyzer_schema import ScenarioEvaluationBlueprint
 
@@ -34,6 +36,15 @@ You must populate every field of the schema:
 
 Every enum field must use one of the exact values defined in the schema for that \
 field -- never a synonym or a value from a different field's enum."""
+
+
+settings = get_settings()
+client = AsyncOpenAI(
+    api_key=settings.openai_api_key,
+    base_url="https://us.api.openai.com/v1"
+)
+
+set_default_openai_client(client)
 
 
 def build_agent(model: str) -> Agent:

@@ -105,7 +105,11 @@ def render_advisor_tab() -> None:
         with st.spinner("Analyzing scenario..."):
             try:
                 blueprint = analyze(industry, use_case, volume, budget, model_name)
-                qualification = qualify_models(blueprint.required_capabilities, list_models())
+                qualification = qualify_models(
+                    blueprint.required_capabilities,
+                    list_models(),
+                    blueprint.workload_profile.context_window,
+                )
                 response_text = (
                     format_analysis(blueprint) + "\n\n" + format_qualification(qualification)
                 )
