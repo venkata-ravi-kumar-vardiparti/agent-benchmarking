@@ -21,8 +21,8 @@ def format_qualification(result: ModelQualificationResult) -> str:
     parts = [
         "**Model Qualification Analysis**",
         "\n".join(table_lines),
-        "\n```json",
-        json.dumps(result.to_dict(), indent=2),
-        "```",
+        # "\n```json",
+        # json.dumps(result.to_dict(), indent=2),
+        # "```",
     ]
     return "\n\n".join(parts)
