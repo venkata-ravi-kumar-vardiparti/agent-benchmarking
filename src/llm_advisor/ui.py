@@ -7,6 +7,7 @@ from justification_agent import format_justifications, generate_justifications
 from llm_advisor.agent import analyze
 from llm_advisor.config import get_settings
 from llm_advisor.formatting import format_analysis
+from llm_advisor.report_export import build_pdf_report
 from model_catalog.repository import list_models
 from model_qualification import qualify_models
 from model_qualification.formatting import format_qualification
@@ -18,6 +19,7 @@ _INPUT_KEYS = ("advisor_industry", "advisor_use_case", "advisor_volume", "adviso
 
 def _clear_advisor_state() -> None:
     st.session_state.messages = []
+    st.session_state.pop("last_report", None)
     for key in _INPUT_KEYS:
         st.session_state.pop(key, None)
 
@@ -72,9 +74,18 @@ def render_advisor_tab() -> None:
         )
         submitted = st.button("Analyze")
 
-    for message in st.session_state.messages:
+    for index, message in enumerate(st.session_state.messages):
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
+            is_last_message = index == len(st.session_state.messages) - 1
+            if is_last_message and message["role"] == "assistant" and st.session_state.get("last_report"):
+                st.download_button(
+                    "📄 Export report as PDF",
+                    data=build_pdf_report(**st.session_state.last_report),
+                    file_name="llm_capability_advisor_report.pdf",
+                    mime="application/pdf",
+                    key=f"download_pdf_history_{index}",
+                )
 
     if not submitted:
         return
@@ -106,6 +117,8 @@ def render_advisor_tab() -> None:
 
     with st.chat_message("assistant"):
         response_text = ""
+        scoring_result = None
+        justification_result = None
         with st.status("Step 1/5 — Analyzing scenario...", expanded=True) as status:
             try:
                 blueprint = analyze(industry, use_case, volume, budget, model_name)
@@ -124,6 +137,12 @@ def render_advisor_tab() -> None:
                 response_text = (
                     format_analysis(blueprint) + "\n\n" + format_qualification(qualification)
                 )
+                st.session_state.last_report = {
+                    "blueprint": blueprint,
+                    "qualification": qualification,
+                    "scoring_result": None,
+                    "justification_result": None,
+                }
 
                 if qualification.qualified_models:
                     status.update(label="Step 3/5 — Running Benchmark Engine Deep Dive...")
@@ -151,12 +170,14 @@ def render_advisor_tab() -> None:
                         status.write("Scoring complete.")
 
                         response_text += "\n\n" + format_scores(scoring_result)
+                        st.session_state.last_report["scoring_result"] = scoring_result
 
                         status.update(label="Step 5/5 — Justifying model scores...")
                         justification_result = generate_justifications(scoring_result)
                         status.write("Justifications complete.")
 
                         response_text += "\n\n" + format_justifications(justification_result)
+                        st.session_state.last_report["justification_result"] = justification_result
 
                         status.update(label="Pipeline complete.", state="complete", expanded=False)
                 else:
@@ -166,4 +187,12 @@ def render_advisor_tab() -> None:
                 response_text = f"Analysis failed: {exc}"
                 status.update(label="Pipeline failed.", state="error", expanded=True)
         st.markdown(response_text)
+        if st.session_state.get("last_report"):
+            st.download_button(
+                "📄 Export report as PDF",
+                data=build_pdf_report(**st.session_state.last_report),
+                file_name="llm_capability_advisor_report.pdf",
+                mime="application/pdf",
+                key="download_pdf_fresh",
+            )
     st.session_state.messages.append({"role": "assistant", "content": response_text})
