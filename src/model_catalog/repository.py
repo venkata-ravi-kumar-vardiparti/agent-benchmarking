@@ -72,6 +72,16 @@ def create_model(record: ModelRecord) -> ModelRecord:
     return record
 
 
+def delete_model(model_id: str) -> None:
+    init_db()
+    existing = get_model(model_id)
+    if existing is None:
+        raise ValueError(f"No model found with id={model_id!r}")
+
+    with get_connection() as conn:
+        conn.execute("DELETE FROM models WHERE id = ?", (model_id,))
+
+
 def update_model(model_id: str, record: ModelRecord) -> ModelRecord:
     init_db()
     existing = get_model(model_id)

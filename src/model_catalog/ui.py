@@ -4,7 +4,7 @@ import streamlit as st
 
 from llm_advisor.analyzer_schema import Capability
 from model_catalog.models import DuplicateModelError, ModelRecord
-from model_catalog.repository import create_model, get_model, list_models, update_model
+from model_catalog.repository import create_model, delete_model, get_model, list_models, update_model
 
 _CAPABILITY_OPTIONS = [c.value for c in Capability]
 
@@ -210,3 +210,24 @@ def render_catalog_tab() -> None:
                     st.rerun()
                 except DuplicateModelError as exc:
                     st.error(str(exc))
+
+    with st.expander("Delete model", expanded=False):
+        if not models:
+            st.info("No models to delete yet.")
+            return
+
+        options = {m.id: _model_label(m) for m in models}
+        selected_id = st.selectbox(
+            "Select a model to delete",
+            options=list(options.keys()),
+            format_func=lambda model_id: options[model_id],
+            key="delete_model_select",
+        )
+        confirmed = st.checkbox(
+            f"I understand this will permanently delete {options[selected_id]}.",
+            key=f"confirm_delete_{selected_id}",
+        )
+        if st.button("Delete model", type="primary", disabled=not confirmed):
+            delete_model(selected_id)
+            st.success(f"Deleted {options[selected_id]}.")
+            st.rerun()

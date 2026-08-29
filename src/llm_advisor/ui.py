@@ -2,12 +2,14 @@
 
 import streamlit as st
 
+from benchmark_engine import run_benchmark_deep_dive
 from llm_advisor.agent import analyze
 from llm_advisor.config import get_settings
 from llm_advisor.formatting import format_analysis
 from model_catalog.repository import list_models
 from model_qualification import qualify_models
 from model_qualification.formatting import format_qualification
+from scoring_agent import format_scores, score_benchmark_results
 
 
 _INPUT_KEYS = ("advisor_industry", "advisor_use_case", "advisor_volume", "advisor_budget", "advisor_model_name")
@@ -102,9 +104,13 @@ def render_advisor_tab() -> None:
         st.markdown(user_summary)
 
     with st.chat_message("assistant"):
-        with st.spinner("Analyzing scenario..."):
+        response_text = ""
+        with st.status("Step 1/4 — Analyzing scenario...", expanded=True) as status:
             try:
                 blueprint = analyze(industry, use_case, volume, budget, model_name)
+                status.write("Scenario analysis complete.")
+
+                status.update(label="Step 2/4 — Qualifying models against the catalog...")
                 qualification = qualify_models(
                     blueprint.required_capabilities,
                     list_models(),
@@ -112,10 +118,30 @@ def render_advisor_tab() -> None:
                     blueprint.business_context.monthly_request_volume,
                     blueprint.financial_constraints.monthly_budget_usd,
                 )
+                status.write(f"{len(qualification.qualified_models)} model(s) qualified.")
+
                 response_text = (
                     format_analysis(blueprint) + "\n\n" + format_qualification(qualification)
                 )
+
+                if qualification.qualified_models:
+                    status.update(label="Step 3/4 — Running Benchmark Engine Deep Dive...")
+                    benchmark_results = run_benchmark_deep_dive(blueprint, qualification)
+                    status.write(f"Ran {len(benchmark_results)} benchmark test case(s).")
+
+                    status.update(label="Step 4/4 — Scoring qualified models...")
+                    scoring_result = score_benchmark_results(
+                        blueprint, qualification, benchmark_results
+                    )
+                    status.write("Scoring complete.")
+
+                    response_text += "\n\n" + format_scores(scoring_result)
+                else:
+                    status.write("No models qualified — skipping benchmarking and scoring.")
+
+                status.update(label="Pipeline complete.", state="complete", expanded=False)
             except Exception as exc:  # noqa: BLE001
                 response_text = f"Analysis failed: {exc}"
+                status.update(label="Pipeline failed.", state="error", expanded=True)
         st.markdown(response_text)
     st.session_state.messages.append({"role": "assistant", "content": response_text})
