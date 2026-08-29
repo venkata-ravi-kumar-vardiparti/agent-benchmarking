@@ -2,7 +2,8 @@
 
 import streamlit as st
 
-from benchmark_engine import run_benchmark_deep_dive
+from benchmark_engine import NoMatchingTestCasesError, run_benchmark_deep_dive
+from justification_agent import format_justifications, generate_justifications
 from llm_advisor.agent import analyze
 from llm_advisor.config import get_settings
 from llm_advisor.formatting import format_analysis
@@ -105,12 +106,12 @@ def render_advisor_tab() -> None:
 
     with st.chat_message("assistant"):
         response_text = ""
-        with st.status("Step 1/4 — Analyzing scenario...", expanded=True) as status:
+        with st.status("Step 1/5 — Analyzing scenario...", expanded=True) as status:
             try:
                 blueprint = analyze(industry, use_case, volume, budget, model_name)
                 status.write("Scenario analysis complete.")
 
-                status.update(label="Step 2/4 — Qualifying models against the catalog...")
+                status.update(label="Step 2/5 — Qualifying models against the catalog...")
                 qualification = qualify_models(
                     blueprint.required_capabilities,
                     list_models(),
@@ -125,21 +126,42 @@ def render_advisor_tab() -> None:
                 )
 
                 if qualification.qualified_models:
-                    status.update(label="Step 3/4 — Running Benchmark Engine Deep Dive...")
-                    benchmark_results = run_benchmark_deep_dive(blueprint, qualification)
-                    status.write(f"Ran {len(benchmark_results)} benchmark test case(s).")
+                    status.update(label="Step 3/5 — Running Benchmark Engine Deep Dive...")
+                    try:
+                        benchmark_results = run_benchmark_deep_dive(blueprint, qualification)
+                    except NoMatchingTestCasesError as exc:
+                        status.write(f"⚠️ {exc}")
+                        status.update(
+                            label="Pipeline complete (no test data for this use case).",
+                            state="complete",
+                            expanded=True,
+                        )
+                        response_text += (
+                            "\n\n**⚠️ Benchmark Engine Deep Dive skipped:** "
+                            f"{exc} Add a test case markdown file for this industry to "
+                            "`src/test_cases/` to enable benchmarking and scoring for it."
+                        )
+                    else:
+                        status.write(f"Ran {len(benchmark_results)} benchmark test case(s).")
 
-                    status.update(label="Step 4/4 — Scoring qualified models...")
-                    scoring_result = score_benchmark_results(
-                        blueprint, qualification, benchmark_results
-                    )
-                    status.write("Scoring complete.")
+                        status.update(label="Step 4/5 — Scoring qualified models...")
+                        scoring_result = score_benchmark_results(
+                            blueprint, qualification, benchmark_results
+                        )
+                        status.write("Scoring complete.")
 
-                    response_text += "\n\n" + format_scores(scoring_result)
+                        response_text += "\n\n" + format_scores(scoring_result)
+
+                        status.update(label="Step 5/5 — Justifying model scores...")
+                        justification_result = generate_justifications(scoring_result)
+                        status.write("Justifications complete.")
+
+                        response_text += "\n\n" + format_justifications(justification_result)
+
+                        status.update(label="Pipeline complete.", state="complete", expanded=False)
                 else:
-                    status.write("No models qualified — skipping benchmarking and scoring.")
-
-                status.update(label="Pipeline complete.", state="complete", expanded=False)
+                    status.write("No models qualified — skipping benchmarking, scoring, and justification.")
+                    status.update(label="Pipeline complete.", state="complete", expanded=False)
             except Exception as exc:  # noqa: BLE001
                 response_text = f"Analysis failed: {exc}"
                 status.update(label="Pipeline failed.", state="error", expanded=True)

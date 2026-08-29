@@ -13,7 +13,7 @@ from llm_advisor.analyzer_schema import ScenarioEvaluationBlueprint
 from model_qualification.schema import ModelQualificationResult
 
 from benchmark_engine.agents import BenchmarkModelRoster, run_test_case
-from benchmark_engine.schema import BenchmarkResult
+from benchmark_engine.schema import BenchmarkResult, NoMatchingTestCasesError
 from benchmark_engine.test_case_loader import load_test_cases, select_test_case_file
 
 
@@ -21,11 +21,18 @@ def run_benchmark_deep_dive(
     blueprint: ScenarioEvaluationBlueprint,
     qualification: ModelQualificationResult,
 ) -> list[BenchmarkResult]:
-    """Evaluate every qualified model against the scenario's test cases."""
-    test_case_file = select_test_case_file(
-        blueprint.business_context.industry.value,
-        blueprint.business_context.use_case,
-    )
+    """Evaluate every qualified model against the scenario's test cases.
+
+    Raises `NoMatchingTestCasesError` if no test case file matches the
+    scenario's industry -- callers should surface that to the user rather
+    than benchmarking against an unrelated industry's test cases.
+    """
+    industry = blueprint.business_context.industry.value
+    test_case_file = select_test_case_file(industry, blueprint.business_context.use_case)
+    if test_case_file is None:
+        raise NoMatchingTestCasesError(
+            f"No test cases are available for the '{industry}' industry."
+        )
     test_cases = load_test_cases(test_case_file)
 
     roster = BenchmarkModelRoster.from_qualified_models(qualification.qualified_models)

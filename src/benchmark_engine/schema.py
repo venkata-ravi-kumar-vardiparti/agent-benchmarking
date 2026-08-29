@@ -10,6 +10,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
+class NoMatchingTestCasesError(Exception):
+    """Raised when no test case file matches the scenario's industry."""
+
+
 @dataclass
 class TestCase:
     """A single test question and its expected (reference) answer."""

@@ -52,10 +52,13 @@ def select_test_case_file(
     industry: str,
     use_case: str,
     test_cases_dir: Path = TEST_CASES_DIR,
-) -> Path:
+) -> Path | None:
     """Pick the markdown file whose industry/use case best matches the scenario.
 
-    Industry match is the primary signal; overlapping use-case keywords break ties.
+    Industry match is required; overlapping use-case keywords break ties among
+    files for that industry. Returns None if no file's industry matches at all --
+    silently benchmarking against an unrelated industry's test cases would be
+    misleading, so callers should treat this as "no test data available".
     """
     candidates = sorted(test_cases_dir.glob("*.md"))
     if not candidates:
@@ -63,14 +66,19 @@ def select_test_case_file(
 
     use_case_words = set(re.findall(r"\w+", use_case.lower()))
 
-    def score(path: Path) -> tuple[int, int]:
+    scored = []
+    for path in candidates:
         file_industry, file_use_case, _ = parse_test_case_file(path)
         industry_match = int(file_industry.strip().lower() == industry.strip().lower())
         file_use_case_words = set(re.findall(r"\w+", file_use_case.lower()))
         overlap = len(use_case_words & file_use_case_words)
-        return (industry_match, overlap)
+        scored.append((industry_match, overlap, path))
 
-    return max(candidates, key=score)
+    if not any(industry_match for industry_match, _, _ in scored):
+        return None
+
+    _, _, best_path = max(scored, key=lambda item: (item[0], item[1]))
+    return best_path
 
 
 def load_test_cases(path: Path) -> list[TestCase]:

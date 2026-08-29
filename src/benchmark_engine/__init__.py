@@ -2,7 +2,7 @@
 
 from benchmark_engine.agents import BenchmarkModelRoster
 from benchmark_engine.engine import run_benchmark_deep_dive
-from benchmark_engine.schema import BenchmarkResult, TestCase
+from benchmark_engine.schema import BenchmarkResult, NoMatchingTestCasesError, TestCase
 from benchmark_engine.test_case_loader import (
     load_test_cases,
     parse_test_case_file,
@@ -12,6 +12,7 @@ from benchmark_engine.test_case_loader import (
 __all__ = [
     "BenchmarkModelRoster",
     "BenchmarkResult",
+    "NoMatchingTestCasesError",
     "TestCase",
     "load_test_cases",
     "parse_test_case_file",
