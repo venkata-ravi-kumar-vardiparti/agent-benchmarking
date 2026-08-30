@@ -9,6 +9,7 @@ from model_catalog.repository import list_models
 from model_qualification import qualify_models
 from model_qualification.formatting import format_qualification
 from scoring_agent import format_scores, score_benchmark_results
+from sustainability_engine import apply_sustainability_scoring
 
 
 def main():
@@ -17,7 +18,7 @@ def main():
     use_case="enrollment file validations"
     volume="100"
     budget="100"
-    model_name="gpt-4o-mini"
+    model_name="gpt-5.6-sol"
     try:
         blueprint = analyze(industry, use_case, volume, budget, model_name)
         qualification = qualify_models(
@@ -41,6 +42,7 @@ def main():
                 )
             else:
                 scoring_result = score_benchmark_results(blueprint, qualification, benchmark_results)
+                scoring_result = apply_sustainability_scoring(scoring_result)
                 response_text += "\n\n" + format_scores(scoring_result)
 
                 justification_result = generate_justifications(scoring_result)

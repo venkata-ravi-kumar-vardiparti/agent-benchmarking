@@ -50,6 +50,10 @@ class ModelRecord:
     data_residency: str = ""
     certifications: list[str] = field(default_factory=list)
 
+    # Sustainability Data
+    energy_factor: float = 0.0
+    carbon_intensity: float = 0.0
+
     # Bookkeeping
     id: str = ""
     created_at: str = ""
@@ -75,6 +79,8 @@ class ModelRecord:
             "region_availability": _join_list(self.region_availability),
             "data_residency": self.data_residency,
             "certifications": _join_list(self.certifications),
+            "energy_factor": self.energy_factor,
+            "carbon_intensity": self.carbon_intensity,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
         }
@@ -100,6 +106,8 @@ class ModelRecord:
             region_availability=_split_list(row["region_availability"]),
             data_residency=row["data_residency"],
             certifications=_split_list(row["certifications"]),
+            energy_factor=row["energy_factor"],
+            carbon_intensity=row["carbon_intensity"],
             created_at=row["created_at"],
             updated_at=row["updated_at"],
         )

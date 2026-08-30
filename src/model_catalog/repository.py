@@ -25,6 +25,8 @@ _COLUMNS = [
     "region_availability",
     "data_residency",
     "certifications",
+    "energy_factor",
+    "carbon_intensity",
 ]
 
 

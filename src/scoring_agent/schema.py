@@ -29,12 +29,14 @@ class ModelScoreCard:
     model_name: str
     metric_scores: list[MetricScore] = field(default_factory=list)
     overall_score: float = 0.0
+    sustainability_score: float = 0.0
 
     def to_dict(self) -> dict:
         return {
             "model_name": self.model_name,
             "metric_scores": [m.to_dict() for m in self.metric_scores],
             "overall_score": self.overall_score,
+            "sustainability_score": self.sustainability_score,
         }
 
 

@@ -89,6 +89,17 @@ def _render_model_fields(prefix: str, defaults: ModelRecord | None) -> ModelReco
         key=f"{prefix}_certifications",
     )
 
+    st.markdown("**Sustainability Data**")
+    c1, c2 = st.columns(2)
+    energy_factor = c1.number_input(
+        "Energy factor (Wh/token)", min_value=0.0, step=0.0001, format="%.4f",
+        value=d.energy_factor if d else 0.0, key=f"{prefix}_energy_factor",
+    )
+    carbon_intensity = c2.number_input(
+        "Carbon intensity (g CO2/Wh)", min_value=0.0, step=0.01,
+        value=d.carbon_intensity if d else 0.0, key=f"{prefix}_carbon_intensity",
+    )
+
     return ModelRecord(
         model_name=model_name.strip(),
         provider=provider.strip(),
@@ -107,6 +118,8 @@ def _render_model_fields(prefix: str, defaults: ModelRecord | None) -> ModelReco
         region_availability=[r.strip() for r in region_availability.split(",") if r.strip()],
         data_residency=data_residency.strip(),
         certifications=[c.strip() for c in certifications.split(",") if c.strip()],
+        energy_factor=energy_factor,
+        carbon_intensity=carbon_intensity,
     )
 
 
@@ -146,6 +159,8 @@ def _render_catalog_table(models: list[ModelRecord]) -> None:
                 "Regions": ", ".join(m.region_availability),
                 "Data residency": m.data_residency,
                 "Certifications": ", ".join(m.certifications),
+                "Energy factor (Wh/token)": m.energy_factor,
+                "Carbon intensity (g CO2/Wh)": m.carbon_intensity,
             }
             for m in models
         ],

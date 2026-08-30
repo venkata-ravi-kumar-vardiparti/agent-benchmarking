@@ -27,6 +27,8 @@ CREATE TABLE IF NOT EXISTS models (
     region_availability TEXT NOT NULL DEFAULT '',
     data_residency TEXT NOT NULL DEFAULT '',
     certifications TEXT NOT NULL DEFAULT '',
+    energy_factor REAL NOT NULL DEFAULT 0,
+    carbon_intensity REAL NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
     UNIQUE (provider, model_name, version)
@@ -57,6 +59,12 @@ def _migrate(conn: sqlite3.Connection) -> None:
 
     if "capabilities" not in existing_columns:
         conn.execute("ALTER TABLE models ADD COLUMN capabilities TEXT NOT NULL DEFAULT ''")
+
+    if "energy_factor" not in existing_columns:
+        conn.execute("ALTER TABLE models ADD COLUMN energy_factor REAL NOT NULL DEFAULT 0")
+
+    if "carbon_intensity" not in existing_columns:
+        conn.execute("ALTER TABLE models ADD COLUMN carbon_intensity REAL NOT NULL DEFAULT 0")
 
     for column in _OBSOLETE_COLUMNS:
         if column in existing_columns:
