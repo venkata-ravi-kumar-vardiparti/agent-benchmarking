@@ -30,6 +30,7 @@ def format_analysis(blueprint: ScenarioEvaluationBlueprint) -> str:
         ("Regulations", regulations),
         ("Allowed regions", allowed_regions),
         ("Monthly budget", f"${financial.monthly_budget_usd:,.2f}"),
+        ("Sustainability weightage", blueprint.sustainability_weightage.value),
     ]
 
     table_lines = ["| Field | Value |", "| --- | --- |"]

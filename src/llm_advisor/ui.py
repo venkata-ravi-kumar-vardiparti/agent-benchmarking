@@ -5,6 +5,7 @@ import streamlit as st
 from benchmark_engine import NoMatchingTestCasesError, run_benchmark_deep_dive
 from justification_agent import format_justifications, generate_justifications
 from llm_advisor.agent import analyze
+from llm_advisor.analyzer_schema import SustainabilityWeightage
 from llm_advisor.config import get_settings
 from llm_advisor.formatting import format_analysis
 from llm_advisor.report_export import build_pdf_report
@@ -14,7 +15,14 @@ from model_qualification.formatting import format_qualification
 from scoring_agent import format_scores, score_benchmark_results
 
 
-_INPUT_KEYS = ("advisor_industry", "advisor_use_case", "advisor_volume", "advisor_budget", "advisor_model_name")
+_INPUT_KEYS = (
+    "advisor_industry",
+    "advisor_use_case",
+    "advisor_volume",
+    "advisor_budget",
+    "advisor_model_name",
+    "advisor_sustainability_weightage",
+)
 
 
 def _clear_advisor_state() -> None:
@@ -72,6 +80,14 @@ def render_advisor_tab() -> None:
         model_name = st.text_input(
             "Model", value=settings.default_model, key="advisor_model_name"
         )
+        sustainability_weightage = st.selectbox(
+            "Sustainability weightage",
+            options=list(SustainabilityWeightage),
+            format_func=lambda level: level.value,
+            index=1,
+            key="advisor_sustainability_weightage",
+            help="How heavily energy/carbon impact should factor into each model's final score.",
+        )
         submitted = st.button("Analyze")
 
     for index, message in enumerate(st.session_state.messages):
@@ -109,7 +125,8 @@ def render_advisor_tab() -> None:
         f"**Industry:** {industry}\n\n"
         f"**Business use case:** {use_case}\n\n"
         f"**Volume of requests:** {volume} / month\n\n"
-        f"**Budget ceiling:** ${budget:,.2f} / month"
+        f"**Budget ceiling:** ${budget:,.2f} / month\n\n"
+        f"**Sustainability weightage:** {sustainability_weightage.value}"
     )
     st.session_state.messages.append({"role": "user", "content": user_summary})
     with st.chat_message("user"):
@@ -121,7 +138,9 @@ def render_advisor_tab() -> None:
         justification_result = None
         with st.status("Step 1/5 — Analyzing scenario...", expanded=True) as status:
             try:
-                blueprint = analyze(industry, use_case, volume, budget, model_name)
+                blueprint = analyze(
+                    industry, use_case, volume, budget, model_name, sustainability_weightage
+                )
                 status.write("Scenario analysis complete.")
 
                 status.update(label="Step 2/5 — Qualifying models against the catalog...")

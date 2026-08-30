@@ -4,7 +4,7 @@ from agents import Agent, AgentOutputSchema, Runner,trace,set_default_openai_cli
 from openai import AsyncOpenAI
 from llm_advisor.config import get_settings
 
-from llm_advisor.analyzer_schema import ScenarioEvaluationBlueprint
+from llm_advisor.analyzer_schema import ScenarioEvaluationBlueprint, SustainabilityWeightage
 
 INSTRUCTIONS = """You are an LLM solution architect for enterprise AI deployments. \
 Given a business scenario (industry, business use case, expected monthly request \
@@ -63,6 +63,7 @@ def analyze(
     volume: float,
     budget: float,
     model: str,
+    sustainability_weightage: SustainabilityWeightage = SustainabilityWeightage.MEDIUM,
 ) -> ScenarioEvaluationBlueprint:
     with trace("analyzer_agent"):
         agent = build_agent(model)
@@ -74,4 +75,7 @@ def analyze(
         "Analyze this scenario and determine the required capabilities of the LLM."
         )
         result = Runner.run_sync(agent, prompt)
-        return result.final_output
+        blueprint = result.final_output
+        # User-supplied preference, not something the LLM should infer.
+        blueprint.sustainability_weightage = sustainability_weightage
+        return blueprint

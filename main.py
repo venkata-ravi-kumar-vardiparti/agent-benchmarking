@@ -3,6 +3,7 @@ import pprint
 from benchmark_engine import NoMatchingTestCasesError, run_benchmark_deep_dive
 from justification_agent import format_justifications, generate_justifications
 from llm_advisor.agent import analyze
+from llm_advisor.analyzer_schema import SustainabilityWeightage
 from llm_advisor.config import get_settings
 from llm_advisor.formatting import format_analysis
 from model_catalog.repository import list_models
@@ -19,8 +20,9 @@ def main():
     volume="100"
     budget="100"
     model_name="gpt-5.6-sol"
+    sustainability_weightage=SustainabilityWeightage.MEDIUM
     try:
-        blueprint = analyze(industry, use_case, volume, budget, model_name)
+        blueprint = analyze(industry, use_case, volume, budget, model_name, sustainability_weightage)
         qualification = qualify_models(
             blueprint.required_capabilities,
             list_models(),

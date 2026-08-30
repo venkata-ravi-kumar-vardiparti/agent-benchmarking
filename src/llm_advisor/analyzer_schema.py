@@ -236,6 +236,17 @@ class FinancialConstraints(BaseModel):
 
 
 # ============================================================================
+# SUSTAINABILITY PREFERENCE
+# ============================================================================
+
+class SustainabilityWeightage(str, Enum):
+    LOW = "Low"
+    MEDIUM = "Medium"
+    HIGH = "High"
+    VERY_HIGH = "Very High"
+
+
+# ============================================================================
 # MASTER SCENARIO OUTPUT
 # ============================================================================
 
@@ -259,3 +270,8 @@ class ScenarioEvaluationBlueprint(BaseModel):
     governance_requirements: GovernanceRequirements
 
     financial_constraints: FinancialConstraints
+
+    sustainability_weightage: SustainabilityWeightage = Field(
+        default=SustainabilityWeightage.MEDIUM,
+        description="User-selected weightage given to sustainability (energy/carbon impact) when scoring models."
+    )

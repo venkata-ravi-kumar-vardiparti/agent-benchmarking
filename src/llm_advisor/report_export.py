@@ -65,6 +65,7 @@ def _blueprint_rows(blueprint: ScenarioEvaluationBlueprint) -> list[tuple[str, s
         ("Regulations", regulations),
         ("Allowed regions", allowed_regions),
         ("Monthly budget", f"${financial.monthly_budget_usd:,.2f}"),
+        ("Sustainability weightage", blueprint.sustainability_weightage.value),
     ]
 
 
