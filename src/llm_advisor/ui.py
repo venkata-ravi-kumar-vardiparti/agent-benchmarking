@@ -45,6 +45,12 @@ def _render_score_charts(scoring_result: ScoringResult | None) -> None:
     metric_chart = build_metric_score_chart(scoring_result)
     if metric_chart is not None:
         st.altair_chart(metric_chart, use_container_width=True)
+        st.caption(
+            "Cost, Latency, and Throughput are **relative** to the other models "
+            "qualified in this run (100 = best of this set). All other metrics "
+            "are **absolute** 0-100 judgments from the LLM judge. Hover a bar "
+            "for its basis."
+        )
     ratio_chart = build_sustainability_ratio_chart(scoring_result)
     if ratio_chart is not None:
         st.altair_chart(ratio_chart, use_container_width=True)

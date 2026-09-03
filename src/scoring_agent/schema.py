@@ -17,9 +17,18 @@ class MetricScore:
     metric: str
     score: float
     rationale: str = ""
+    raw_value: float | None = None
+    """The metric's actual measured value (e.g. USD/month for Cost), independent
+    of the 0-100 normalized `score` used for ranking. None for judged metrics
+    that have no natural unit."""
 
     def to_dict(self) -> dict:
-        return {"metric": self.metric, "score": self.score, "rationale": self.rationale}
+        return {
+            "metric": self.metric,
+            "score": self.score,
+            "rationale": self.rationale,
+            "raw_value": self.raw_value,
+        }
 
 
 @dataclass

@@ -5,7 +5,20 @@ from __future__ import annotations
 import altair as alt
 import pandas as pd
 
+from scoring_agent.quantitative_scoring import QUANTITATIVE_METRICS
 from scoring_agent.schema import ScoringResult
+
+# See formatting._RELATIVE_METRIC_NAMES -- same relative-vs-absolute distinction,
+# surfaced here as a tooltip field since a bar chart has no room for a footnote.
+_RELATIVE_METRIC_NAMES = {m.value for m in QUANTITATIVE_METRICS}
+
+
+def _basis(metric_name: str) -> str:
+    if metric_name == "Overall":
+        return "Mixed (relative + absolute)"
+    if metric_name in _RELATIVE_METRIC_NAMES:
+        return "Relative to other qualified models"
+    return "Absolute (judged)"
 
 # Validated categorical palette (see dataviz skill references/palette.md) --
 # fixed hue order, never cycled.
@@ -51,11 +64,19 @@ def build_metric_score_chart(result: ScoringResult) -> alt.Chart | None:
     """Grouped bar chart comparing every qualified model's per-metric and overall scores (0-100)."""
     model_names = [card.model_name for card in result.scorecards]
     rows = [
-        {"model": card.model_name, "metric": metric_score.metric, "score": metric_score.score}
+        {
+            "model": card.model_name,
+            "metric": metric_score.metric,
+            "score": metric_score.score,
+            "basis": _basis(metric_score.metric),
+        }
         for card in result.scorecards
         for metric_score in card.metric_scores
     ]
-    rows += [{"model": card.model_name, "metric": "Overall", "score": card.overall_score} for card in result.scorecards]
+    rows += [
+        {"model": card.model_name, "metric": "Overall", "score": card.overall_score, "basis": _basis("Overall")}
+        for card in result.scorecards
+    ]
     if not rows:
         return None
 
@@ -71,6 +92,7 @@ def build_metric_score_chart(result: ScoringResult) -> alt.Chart | None:
                 alt.Tooltip("model:N", title="Model"),
                 alt.Tooltip("metric:N", title="Metric"),
                 alt.Tooltip("score:Q", title="Score", format=".0f"),
+                alt.Tooltip("basis:N", title="Basis"),
             ],
         )
         .properties(height=320, title="Model Scoring — per-metric and overall scores")

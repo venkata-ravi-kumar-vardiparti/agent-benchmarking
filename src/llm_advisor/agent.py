@@ -18,7 +18,11 @@ You must populate every field of the schema:
   taking into account the reasoning depth and multimodality the use case implies. \
   Also estimate the minimum context window (in tokens) the model needs to handle \
   a typical request for this use case (e.g. a single support ticket vs. a full \
-  contract review), expressed as a token count or range such as "8k-16k tokens".
+  contract review). Always express this as a single concrete number of tokens, \
+  formatted with thousands separators and the word "tokens", e.g. "109,000 tokens" \
+  -- never a range (e.g. "8k-16k tokens"), a vague description (e.g. "large" or \
+  "standard"), or a number with no "tokens" unit. If a range feels appropriate, \
+  report the higher end as the single number instead.
 - required_capabilities: choose only from the fixed capability list defined by the \
   schema's enum (e.g. Reasoning, Long Context, Structured Output, Function Calling, \
   Tool Calling, RAG Support, PII Handling, Multimodal, OCR, Code Generation, \

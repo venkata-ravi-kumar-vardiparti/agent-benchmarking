@@ -61,6 +61,7 @@ def compute_quantitative_scores(
                     metric=EvaluationMetric.COST.value,
                     score=score,
                     rationale=f"Estimated monthly cost: ${costs[name]:,.2f}",
+                    raw_value=costs[name],
                 )
             )
 
