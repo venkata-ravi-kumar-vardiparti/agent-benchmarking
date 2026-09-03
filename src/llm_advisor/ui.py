@@ -12,7 +12,13 @@ from llm_advisor.report_export import build_pdf_report
 from model_catalog.repository import list_models
 from model_qualification import qualify_models
 from model_qualification.formatting import format_qualification
-from scoring_agent import format_scores, score_benchmark_results
+from scoring_agent import (
+    build_metric_score_chart,
+    build_sustainability_ratio_chart,
+    format_scores,
+    score_benchmark_results,
+)
+from scoring_agent.schema import ScoringResult
 from sustainability_engine import apply_sustainability_scoring
 
 
@@ -31,6 +37,17 @@ def _clear_advisor_state() -> None:
     st.session_state.pop("last_report", None)
     for key in _INPUT_KEYS:
         st.session_state.pop(key, None)
+
+
+def _render_score_charts(scoring_result: ScoringResult | None) -> None:
+    if not scoring_result or not scoring_result.scorecards:
+        return
+    metric_chart = build_metric_score_chart(scoring_result)
+    if metric_chart is not None:
+        st.altair_chart(metric_chart, use_container_width=True)
+    ratio_chart = build_sustainability_ratio_chart(scoring_result)
+    if ratio_chart is not None:
+        st.altair_chart(ratio_chart, use_container_width=True)
 
 
 def _validate(industry: str, use_case: str, volume: float, budget: float) -> list[str]:
@@ -96,6 +113,7 @@ def render_advisor_tab() -> None:
             st.markdown(message["content"])
             is_last_message = index == len(st.session_state.messages) - 1
             if is_last_message and message["role"] == "assistant" and st.session_state.get("last_report"):
+                _render_score_charts(st.session_state.last_report.get("scoring_result"))
                 st.download_button(
                     "📄 Export report as PDF",
                     data=build_pdf_report(**st.session_state.last_report),
@@ -210,6 +228,7 @@ def render_advisor_tab() -> None:
                 response_text = f"Analysis failed: {exc}"
                 status.update(label="Pipeline failed.", state="error", expanded=True)
         st.markdown(response_text)
+        _render_score_charts(scoring_result)
         if st.session_state.get("last_report"):
             st.download_button(
                 "📄 Export report as PDF",
