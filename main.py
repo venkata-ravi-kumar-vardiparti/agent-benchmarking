@@ -47,7 +47,9 @@ def main():
                 scoring_result = apply_sustainability_scoring(scoring_result)
                 response_text += "\n\n" + format_scores(scoring_result)
 
-                justification_result = generate_justifications(scoring_result)
+                justification_result = generate_justifications(
+                    scoring_result, blueprint.sustainability_weightage
+                )
                 response_text += "\n\n" + format_justifications(justification_result)
 
        #  pprint.pprint(response_text)

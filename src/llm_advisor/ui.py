@@ -194,7 +194,9 @@ def render_advisor_tab() -> None:
                         st.session_state.last_report["scoring_result"] = scoring_result
 
                         status.update(label="Step 5/5 — Justifying model scores...")
-                        justification_result = generate_justifications(scoring_result)
+                        justification_result = generate_justifications(
+                            scoring_result, blueprint.sustainability_weightage
+                        )
                         status.write("Justifications complete.")
 
                         response_text += "\n\n" + format_justifications(justification_result)
