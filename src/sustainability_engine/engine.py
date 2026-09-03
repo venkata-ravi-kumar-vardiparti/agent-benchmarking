@@ -11,19 +11,8 @@ from model_catalog.models import ModelRecord
 from model_catalog.repository import list_models
 from scoring_agent.schema import ScoringResult
 
-SUSTAINABILITY_WEIGHT = 0.35
-
-
-def _normalize(raw_values: dict[str, float]) -> dict[str, float]:
-    """Min-max normalize raw values across models to a 0-100 score (higher is better)."""
-    if not raw_values:
-        return {}
-
-    lo, hi = min(raw_values.values()), max(raw_values.values())
-    if hi == lo:
-        return {name: 100.0 for name in raw_values}
-
-    return {name: 100.0 * (value - lo) / (hi - lo) for name, value in raw_values.items()}
+CARBON_WEIGHT = 0.50
+ENERGY_WEIGHT = 0.50
 
 
 def apply_sustainability_scoring(
@@ -44,24 +33,26 @@ def apply_sustainability_scoring(
 
         # Step 1: Estimate Energy Consumption
         energy_wh = record.context_window * record.energy_factor
+        print(f"record.context_window : {record.context_window}")
+        print(f"record.energy_factor : {record.energy_factor}")
         # Step 2: Estimate Carbon Emissions
         co2e_g = energy_wh * record.carbon_intensity
-
+        print(f"record.carbon_intensity :  {record.carbon_intensity}")
+        print(f"energy_wh : {energy_wh}")
+        print(f"co2e_g : {co2e_g}")
         # Step 3: Quality/Carbon Ratio
         quality_carbon_ratio[card.model_name] = card.overall_score / co2e_g if co2e_g else 0.0
+        print(f"quality_carbon_ratio[card.model_name] : {quality_carbon_ratio[card.model_name]}" )
         # Step 5: Quality/Energy Ratio
         quality_energy_ratio[card.model_name] = card.overall_score / energy_wh if energy_wh else 0.0
+        print(f"quality_energy_ratio[card.model_name] : {quality_energy_ratio[card.model_name]}" )
 
-    # Step 6: Normalize both ratios to 0-100 across the qualified models
-    normalized_carbon_ratio = _normalize(quality_carbon_ratio)
-    normalized_energy_ratio = _normalize(quality_energy_ratio)
-
-    # Step 7 & 8: Compute sustainability_score and attach it to every scorecard
+    # Step 6 & 7: Compute sustainability_score directly from the absolute
+    # ratios (no normalization) and attach it to every scorecard
     for card in scoring_result.scorecards:
-        carbon_score = normalized_carbon_ratio.get(card.model_name, 0.0)
-        energy_score = normalized_energy_ratio.get(card.model_name, 0.0)
+        card.carbon_score = quality_carbon_ratio.get(card.model_name, 0.0)
+        card.energy_score = quality_energy_ratio.get(card.model_name, 0.0)
         card.sustainability_score = (
-            SUSTAINABILITY_WEIGHT * carbon_score + SUSTAINABILITY_WEIGHT * energy_score
+            100 * (CARBON_WEIGHT * card.carbon_score + ENERGY_WEIGHT * card.energy_score)
         )
-
     return scoring_result

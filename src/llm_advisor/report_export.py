@@ -115,7 +115,7 @@ def build_pdf_report(
                     seen.add(metric_score.metric)
                     metric_names.append(metric_score.metric)
 
-        headings = ["Model", *metric_names, "Overall"]
+        headings = ["Model", *metric_names, "Overall", "Carbon", "Energy", "Sustainability"]
         col_width = 190 / len(headings)
         with pdf.table(col_widths=tuple([col_width] * len(headings)), text_align="LEFT") as table:
             header = table.row()
@@ -128,6 +128,9 @@ def build_pdf_report(
                 for name in metric_names:
                     row.cell(f"{scores_by_metric[name]:.0f}" if name in scores_by_metric else "-")
                 row.cell(f"{card.overall_score:.0f}")
+                row.cell(f"{card.carbon_score:.2f}")
+                row.cell(f"{card.energy_score:.2f}")
+                row.cell(f"{card.sustainability_score:.0f}")
 
     if justification_result and justification_result.justifications:
         pdf.section_title("Score Justifications")

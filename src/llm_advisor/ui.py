@@ -13,6 +13,7 @@ from model_catalog.repository import list_models
 from model_qualification import qualify_models
 from model_qualification.formatting import format_qualification
 from scoring_agent import format_scores, score_benchmark_results
+from sustainability_engine import apply_sustainability_scoring
 
 
 _INPUT_KEYS = (
@@ -186,6 +187,7 @@ def render_advisor_tab() -> None:
                         scoring_result = score_benchmark_results(
                             blueprint, qualification, benchmark_results
                         )
+                        scoring_result = apply_sustainability_scoring(scoring_result)
                         status.write("Scoring complete.")
 
                         response_text += "\n\n" + format_scores(scoring_result)

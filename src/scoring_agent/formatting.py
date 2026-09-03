@@ -15,7 +15,7 @@ def format_scores(result: ScoringResult) -> str:
                 seen.add(metric_score.metric)
                 metric_names.append(metric_score.metric)
 
-    header = ["Model", *metric_names, "Overall", "Sustainability"]
+    header = ["Model", *metric_names, "Overall", "Carbon Ratio", "Energy Ratio"]
     table_lines = [
         "| " + " | ".join(header) + " |",
         "| " + " | ".join(["---"] * len(header)) + " |",
@@ -25,7 +25,8 @@ def format_scores(result: ScoringResult) -> str:
         row = [card.model_name]
         row += [f"{scores_by_metric[name]:.0f}" if name in scores_by_metric else "-" for name in metric_names]
         row.append(f"{card.overall_score:.0f}")
-        row.append(f"{card.sustainability_score:.0f}")
+        row.append(f"{card.carbon_score:.2f}")
+        row.append(f"{card.energy_score:.2f}")
         table_lines.append("| " + " | ".join(row) + " |")
 
     return "\n\n".join(["**Model Scoring — Benchmark Deep Dive**", "\n".join(table_lines)])

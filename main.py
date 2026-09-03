@@ -50,7 +50,7 @@ def main():
                 justification_result = generate_justifications(scoring_result)
                 response_text += "\n\n" + format_justifications(justification_result)
 
-        pprint.pprint(response_text)
+       #  pprint.pprint(response_text)
     except Exception as exc:  # noqa: BLE001
         response_text = f"Analysis failed: {exc}"
 
